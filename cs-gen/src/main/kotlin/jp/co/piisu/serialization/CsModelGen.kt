@@ -5,10 +5,11 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.internal.*
+import kotlinx.serialization.modules.EmptyModule
 import kotlinx.serialization.modules.SerialModule
 
 @InternalSerializationApi
-class CsModelGen(val context: SerialModule) {
+class CsModelGen(val context: SerialModule = EmptyModule) {
 
     inner class Property(
             val name: String, val descriptor: SerialDescriptor
