@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.3.61"
+    kotlin("plugin.serialization") version "1.3.61"
 }
 
 group = "org.example"
@@ -11,6 +12,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.14.0") // JVM depende
 }
 

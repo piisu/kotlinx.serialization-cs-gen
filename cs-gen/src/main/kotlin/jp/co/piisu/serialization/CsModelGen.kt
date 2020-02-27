@@ -23,7 +23,9 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
             get() = "${serializer.csType} ${name} {set; get;} "
     }
 
-    fun generate(serializer: KSerializer<*>) {
+
+    inline fun <reified T> generate(serializer: KSerializer<T>) {
+        val clazz = T::class
         serializer as GeneratedSerializer<*>
         val childSerializers = serializer.childSerializers()
         val properties = (0 until serializer.descriptor.elementsCount).map { index ->
@@ -36,7 +38,9 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
                 )
             }
         }
-        println(properties.map { it.csField }.joinToString("\n"))
+        println("class ${clazz.simpleName} {")
+        println(properties.map { it.csField }.joinToString("    \n", prefix = "    "))
+        println("}")
     }
 
     val ListLikeSerializer<*, *, *>.elementSerializer
@@ -65,6 +69,7 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
             this == FloatSerializer -> "float"
             this == BooleanSerializer -> "bool"
             this is ReferenceArraySerializer<*, *> -> "List<${elementSerializer.csType}>"
+            this is ArrayListSerializer<*> -> "List<${elementSerializer.csType}>"
             this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
             this is GeneratedSerializer<*> -> descriptor.name
             else -> "UnknowType" + this.toString()
