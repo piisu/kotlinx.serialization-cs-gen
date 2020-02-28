@@ -16,10 +16,6 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
             val name: String, val descriptor: SerialDescriptor
             , val annotations: List<Annotation>, val serializer: KSerializer<*>
     ) {
-        override fun toString(): String {
-            return serializer.csType + " " + name
-        }
-
         val csField: String
             get() = "${serializer.csType} ${name} {set; get;} "
     }
@@ -44,12 +40,35 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
             }
         }
 
-        println("class ${clazz.simpleName} {")
-        println(properties.map { it.csField }.joinToString("    \n", prefix = "    "))
+        val modelName = clazz.simpleName
+        println("class ${modelName} {")
+        println(properties.map { "public ${it.csField}" }.joinToString("\n    ", prefix = "    "))
+        println()
+        println("    public override string ToString() {")
+        println("        return $\"" +properties.map { "${it.name}:{${it.name}}" }.joinToString() +"\";")
+        println("    }")
+        println("}")
 
-        println("    void read(CBORObject obj) {")
-        println(properties.map { "${it.serializer.genReadOperation(it.name)}" }
-                .joinToString("        \n", prefix = "        "))
+
+        val serializerName = "${modelName}Converter"
+
+        println()
+        println("class ${serializerName}: ICBORToFromConverter<${modelName}> {")
+        println("    public static readonly ${serializerName} INSTANCE = new ${serializerName}();")
+
+        println("    public ${modelName} FromCBORObject(CBORObject obj) {")
+        println("        ${modelName} model = new ${modelName}();")
+        println(properties.map { "${it.serializer.genReadOperation(it.name, it.name)}" }
+                .joinToString("\n        ", prefix = "        "))
+        println("        return model;")
+        println("    }")
+
+        println("    public CBORObject ToCBORObject(${modelName} model) {")
+        println("        CBORObject obj = CBORObject.NewMap();")
+
+        println(properties.map { "${it.serializer.genWriteOperation(it.name, it.name)}" }
+                .joinToString("\n        ", prefix = "        "))
+        println("        return obj;")
         println("    }")
 
         println("}")
@@ -61,7 +80,7 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
             it.get(this) as KSerializer<*>
         }
 
-    fun KSerializer<*>.genReadOperation(name:String): String = "this.${name} = " + when {
+    fun KSerializer<*>.genReadOperation(name: String, serialName: String): String = "model.${name} = obj[\"${name}\"]." + when {
         this == IntArraySerializer -> TODO()
         this == ByteArraySerializer -> TODO()
         this == CharArraySerializer -> TODO()
@@ -70,8 +89,8 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
         this == DoubleArraySerializer -> TODO()
         this == FloatArraySerializer -> TODO()
         this == BooleanArraySerializer -> TODO()
-        this == StringSerializer -> TODO()
-        this == IntSerializer -> "obj.readInt()"
+        this == StringSerializer -> "AsString()"
+        this == IntSerializer -> "AsInt32()"
         this == ByteSerializer -> TODO()
         this == CharSerializer -> TODO()
         this == ShortSerializer -> TODO()
@@ -79,12 +98,38 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
         this == DoubleSerializer -> TODO()
         this == FloatSerializer -> TODO()
         this == BooleanSerializer -> TODO()
-        this is ReferenceArraySerializer<*, *> -> "List<${elementSerializer.csType}>"
-        this is ArrayListSerializer<*> -> "List<${elementSerializer.csType}>"
+        this is ReferenceArraySerializer<*, *> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
+        this is ArrayListSerializer<*> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
         this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
         this is GeneratedSerializer<*> -> descriptor.name
         else -> "UnknowType" + this.toString()
-    }
+    } + ";"
+
+    fun KSerializer<*>.genWriteOperation(name: String, serialName: String): String = "obj.Add(\"${name}\", " + when {
+        this == IntArraySerializer -> TODO()
+        this == ByteArraySerializer -> TODO()
+        this == CharArraySerializer -> TODO()
+        this == ShortArraySerializer -> TODO()
+        this == LongArraySerializer -> TODO()
+        this == DoubleArraySerializer -> TODO()
+        this == FloatArraySerializer -> TODO()
+        this == BooleanArraySerializer -> TODO()
+        this == StringSerializer -> "model.${name}"
+        this == IntSerializer -> "model.${name}"
+        this == ByteSerializer -> TODO()
+        this == CharSerializer -> TODO()
+        this == ShortSerializer -> TODO()
+        this == LongSerializer -> TODO()
+        this == DoubleSerializer -> TODO()
+        this == FloatSerializer -> TODO()
+        this == BooleanSerializer -> TODO()
+        this is ReferenceArraySerializer<*, *> -> "model.${name}.ToCBORArray(${elementSerializer.csType}Converter.INSTANCE)"
+        this is ArrayListSerializer<*> -> "model.${name}.ToCBORArray(${elementSerializer.csType}Converter.INSTANCE)"
+        this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
+        this is GeneratedSerializer<*> -> descriptor.name
+        else -> "UnknowType" + this.toString()
+    } + ");"
+
 
     val KSerializer<*>.csType: String
         get() = when {
