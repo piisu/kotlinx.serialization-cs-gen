@@ -1,3 +1,6 @@
 build/
 .gradle
 .idea/
+
+CborTest/CborTest/bin/
+CborTest/CborTest/obj/
