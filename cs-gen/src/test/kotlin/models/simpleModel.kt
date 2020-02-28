@@ -17,7 +17,9 @@ data class Users(val users:Array<User>)
 @InternalSerializationApi
 fun main() {
 
-    CsModelGen().generate(User.serializer())
-    CsModelGen().generate(Users.serializer())
+    val modelGen = CsModelGen()
+
+    modelGen.generate(User.serializer())
+    modelGen.generate(Users.serializer())
 }
 

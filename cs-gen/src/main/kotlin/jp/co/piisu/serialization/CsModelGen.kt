@@ -50,11 +50,11 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
         println("}")
 
 
-        val serializerName = "${modelName}Converter"
+        val converterName = "${modelName}Converter"
 
         println()
-        println("class ${serializerName}: ICBORToFromConverter<${modelName}> {")
-        println("    public static readonly ${serializerName} INSTANCE = new ${serializerName}();")
+        println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
+        println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
 
         println("    public ${modelName} FromCBORObject(CBORObject obj) {")
         println("        ${modelName} model = new ${modelName}();")
