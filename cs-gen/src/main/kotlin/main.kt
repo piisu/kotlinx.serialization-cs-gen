@@ -1,4 +1,4 @@
-package hoge
+package serialization
 
 import jp.co.piisu.serialization.CsModelGen
 import kotlinx.serialization.ImplicitReflectionSerializer
@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.getContextualOrDefault
+import java.io.File
 
 interface Message
 
@@ -19,12 +20,13 @@ class IntMessage(val value:Int):Message
 class StringMessage(val value:String):Message
 
 @Serializable
-class StringMessages(val values:Array<Message>) {
+class StringMessages(@SerialName("v") val values:Array<Message>) {
     init {
         println("test")
     }
 }
 
+@ExperimentalStdlibApi
 @ImplicitReflectionSerializer
 @InternalSerializationApi
 fun main() {
@@ -40,5 +42,6 @@ fun main() {
     modelGen.generate(StringMessages.serializer())
 
     println((module.getContextualOrDefault(StringMessage::class)))
+
 
 }

@@ -23,4 +23,9 @@ tasks {
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
     }
+
+    create("generate", JavaExec::class) {
+        classpath = sourceSets["main"].runtimeClasspath
+        main = "hoge.HelloKt"
+    }
 }

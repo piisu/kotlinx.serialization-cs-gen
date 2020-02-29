@@ -11,8 +11,9 @@ import java.util.*
 data class User(val id:Int, val name:String, val likeUsers:List<User>)
 
 @Serializable
-data class Users(val users:Array<User>)
+data class Users(@SerialName("v") val users:Array<User>)
 
+@ExperimentalStdlibApi
 @InternalSerializationApi
 fun main() {
 
@@ -20,9 +21,6 @@ fun main() {
 
     modelGen.generate(User.serializer())
     modelGen.generate(Users.serializer())
-
-
-
 
 }
 

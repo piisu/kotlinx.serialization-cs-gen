@@ -1,29 +1,41 @@
 package jp.co.piisu.serialization
 
-import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.modules.EmptyModule
 import kotlinx.serialization.modules.SerialModule
+import java.io.File
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.superclasses
 
 @InternalSerializationApi
-class CsModelGen(val context: SerialModule = EmptyModule) {
+class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = File(".")) {
 
     inner class Property(
-            val name: String, val descriptor: SerialDescriptor
+            val name: String, val serialName: String, val descriptor: SerialDescriptor
             , val annotations: List<Annotation>, val serializer: KSerializer<*>
     ) {
         val csField: String
-            get() = "${serializer.csType} ${name} {set; get;} "
+            get() = "public ${serializer.csType} ${name} {set; get;} "
+
+        val writeOperation:String
+            get() = "${serializer.genWriteOperation(name, serialName)}"
+
+        val readOperation:String
+            get() ="${serializer.genReadOperation(name, serialName)}"
+
     }
 
+    @ExperimentalStdlibApi
     inline fun <reified T : Any> generate(serializer: KSerializer<T>) {
         val clazz = T::class
         serializer as GeneratedSerializer<*>
 
+        val inversePropertyName = clazz.memberProperties.filter {
+            it.hasAnnotation<SerialName>()
+        }.map { it.findAnnotation<SerialName>()!!.value to it.name }.toMap()
 
         println(clazz.supertypes.map { it.classifier })
         println(clazz.superclasses.map { it })
@@ -31,8 +43,10 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
         val childSerializers = serializer.childSerializers()
         val properties = (0 until serializer.descriptor.elementsCount).map { index ->
             serializer.descriptor.let {
+                val serialName = it.getElementName(index)
                 Property(
-                        it.getElementName(index),
+                        inversePropertyName.getOrDefault(serialName, serialName),
+                        serialName,
                         it.getElementDescriptor(index),
                         it.getElementAnnotations(index),
                         childSerializers[index]
@@ -42,23 +56,22 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
 
         val modelName = clazz.simpleName
         println("class ${modelName} {")
-        println(properties.map { "public ${it.csField}" }.joinToString("\n    ", prefix = "    "))
+        println(properties.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
         println()
         println("    public override string ToString() {")
-        println("        return $\"" +properties.map { "${it.name}:{${it.name}}" }.joinToString() +"\";")
+        println("        return $\"" + properties.map { "${it.name}:{${it.name}}" }.joinToString() + "\";")
         println("    }")
         println("}")
 
 
         val converterName = "${modelName}Converter"
-
         println()
         println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
         println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
 
         println("    public ${modelName} FromCBORObject(CBORObject obj) {")
         println("        ${modelName} model = new ${modelName}();")
-        println(properties.map { "${it.serializer.genReadOperation(it.name, it.name)}" }
+        println(properties.map { it.readOperation }
                 .joinToString("\n        ", prefix = "        "))
         println("        return model;")
         println("    }")
@@ -66,7 +79,7 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
         println("    public CBORObject ToCBORObject(${modelName} model) {")
         println("        CBORObject obj = CBORObject.NewMap();")
 
-        println(properties.map { "${it.serializer.genWriteOperation(it.name, it.name)}" }
+        println(properties.map { it.writeOperation }
                 .joinToString("\n        ", prefix = "        "))
         println("        return obj;")
         println("    }")
@@ -80,7 +93,7 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
             it.get(this) as KSerializer<*>
         }
 
-    fun KSerializer<*>.genReadOperation(name: String, serialName: String): String = "model.${name} = obj[\"${name}\"]." + when {
+    fun KSerializer<*>.genReadOperation(name: String, serialName: String): String = "model.${name} = obj[\"${serialName}\"]." + when {
         this == IntArraySerializer -> TODO()
         this == ByteArraySerializer -> TODO()
         this == CharArraySerializer -> TODO()
@@ -105,7 +118,7 @@ class CsModelGen(val context: SerialModule = EmptyModule) {
         else -> "UnknowType" + this.toString()
     } + ";"
 
-    fun KSerializer<*>.genWriteOperation(name: String, serialName: String): String = "obj.Add(\"${name}\", " + when {
+    fun KSerializer<*>.genWriteOperation(name: String, serialName: String): String = "obj.Add(\"${serialName}\", " + when {
         this == IntArraySerializer -> TODO()
         this == ByteArraySerializer -> TODO()
         this == CharArraySerializer -> TODO()
