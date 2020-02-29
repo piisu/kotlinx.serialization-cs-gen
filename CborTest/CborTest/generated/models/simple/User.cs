@@ -15,13 +15,11 @@ class User {
 
 class UserConverter: ICBORToFromConverter<User> {
     public static readonly UserConverter INSTANCE = new UserConverter();
-    public User FromCBORObject(CBORObject obj) {
-        User model = new User();
-        model.id = obj["id"].AsInt32();
-        model.name = obj["name"].AsString();
-        model.likeUsers = obj["likeUsers"].ToList(models.simple.UserConverter.INSTANCE);
-        return model;
-    }
+    public User FromCBORObject(CBORObject obj) => new User {
+        id = obj["id"].AsInt32(),
+        name = obj["name"].AsString(),
+        likeUsers = obj["likeUsers"].ToList(models.simple.UserConverter.INSTANCE)
+    };
     public CBORObject ToCBORObject(User model) {
         CBORObject obj = CBORObject.NewMap();
         obj.Add("id", model.id);

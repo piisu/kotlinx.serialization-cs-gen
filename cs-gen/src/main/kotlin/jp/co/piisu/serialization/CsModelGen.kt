@@ -84,12 +84,10 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
             it.println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
             it.println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
 
-            it.println("    public ${modelName} FromCBORObject(CBORObject obj) {")
-            it.println("        ${modelName} model = new ${modelName}();")
+            it.println("    public ${modelName} FromCBORObject(CBORObject obj) => new ${modelName} {")
             it.println(properties.map { it.readOperation }
-                    .joinToString("\n        ", prefix = "        "))
-            it.println("        return model;")
-            it.println("    }")
+                    .joinToString(",\n        ", prefix = "        "))
+            it.println("    };")
 
             it.println("    public CBORObject ToCBORObject(${modelName} model) {")
             it.println("        CBORObject obj = CBORObject.NewMap();")
@@ -110,7 +108,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
             it.get(this) as KSerializer<*>
         }
 
-    fun KSerializer<*>.genReadOperation(name: String, serialName: String): String = "model.${name} = obj[\"${serialName}\"]." + when {
+    fun KSerializer<*>.genReadOperation(name: String, serialName: String): String = "${name} = obj[\"${serialName}\"]." + when {
         this == IntArraySerializer -> TODO()
         this == ByteArraySerializer -> TODO()
         this == CharArraySerializer -> TODO()
@@ -133,8 +131,8 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         this is ArrayListSerializer<*> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
         this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
         this is GeneratedSerializer<*> -> descriptor.name
-        else -> "UnknowType" + this.toString()
-    } + ";"
+        else -> "UnknowType:" + this.toString()
+    } + ""
 
     fun KSerializer<*>.genWriteOperation(name: String, serialName: String): String = "obj.Add(\"${serialName}\", " + when {
         this == IntArraySerializer -> TODO()
@@ -159,7 +157,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         this is ArrayListSerializer<*> -> "model.${name}.ToCBORArray(${elementSerializer.csType}Converter.INSTANCE)"
         this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
         this is GeneratedSerializer<*> -> descriptor.name
-        else -> "UnknowType" + this.toString()
+        else -> "UnknowType:" + this.toString()
     } + ");"
 
 
@@ -187,6 +185,6 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
             this is ArrayListSerializer<*> -> "List<${elementSerializer.csType}>"
             this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
             this is GeneratedSerializer<*> -> descriptor.name
-            else -> "UnknowType" + this.toString()
+            else -> "UnknowType:" + this.toString()
         }
 }

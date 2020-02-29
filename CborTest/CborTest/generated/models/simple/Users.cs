@@ -13,11 +13,9 @@ class Users {
 
 class UsersConverter: ICBORToFromConverter<Users> {
     public static readonly UsersConverter INSTANCE = new UsersConverter();
-    public Users FromCBORObject(CBORObject obj) {
-        Users model = new Users();
-        model.users = obj["v"].ToList(models.simple.UserConverter.INSTANCE);
-        return model;
-    }
+    public Users FromCBORObject(CBORObject obj) => new Users {
+        users = obj["v"].ToList(models.simple.UserConverter.INSTANCE)
+    };
     public CBORObject ToCBORObject(Users model) {
         CBORObject obj = CBORObject.NewMap();
         obj.Add("v", model.users.ToCBORArray(models.simple.UserConverter.INSTANCE));

@@ -15,9 +15,10 @@ class ItemInfo {
 
 class ItemInfoConverter: ICBORToFromConverter<ItemInfo> {
     public static readonly ItemInfoConverter INSTANCE = new ItemInfoConverter();
-
-    public ItemInfo FromCBORObject(CBORObject obj) => new ItemInfo
-    {
+    public ItemInfo FromCBORObject(CBORObject obj) => new ItemInfo {
+        id = obj["id"].AsInt32(),
+        name = obj["name"].AsString(),
+        created = obj["created"].AsDateTime()
     };
     public CBORObject ToCBORObject(ItemInfo model) {
         CBORObject obj = CBORObject.NewMap();
