@@ -6,6 +6,10 @@ import kotlinx.serialization.modules.EmptyModule
 import kotlinx.serialization.modules.SerialModule
 import serialization.jp.co.piisu.serialization.DateSerializer
 import java.io.File
+import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberProperties
@@ -29,17 +33,97 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
 
     }
 
+    val KType.csType:String
+        get() = when(classifier) {
+            Int::class-> "int"
+            Date::class -> "DateTime"
+            else -> "Unknown: " + this
+        }
+
+
+    internal val kotlin.reflect.KProperty<*>.csField:String
+        get()= "${returnType.csType} ${name} {get; set;}"
+
+
+
+    @ExperimentalStdlibApi
+    fun generatePolymorphic() {
+        val polyMap = context.javaClass.declaredFields.find { it.name=="polyMap" }!!.let {
+            it.isAccessible = true
+            it.get(context)
+        } as Map<KClass<*>, Map<KClass<*>, KSerializer<*>>>
+
+        polyMap.forEach { clazz, map ->
+
+            map.forEach { clazz, s->
+                this.generate(clazz, s)
+            }
+
+            val outFile = File(dstDir, clazz.qualifiedName!!.replace(".", File.separator) + ".cs")
+            outFile.parentFile.mkdirs()
+            outFile.printWriter(Charsets.UTF_8).use {
+                val modelName = clazz.simpleName
+
+                it.println("""
+                using System;
+                using System.Collections.Generic;
+                using PeterO.Cbor;
+                using Piisu.CBOR;
+            """.trimIndent())
+                it.println("namespace models.simple {")
+                val inheritClasses = clazz.supertypes.filter { it.classifier != Any::class }.map { (it.classifier as KClass<*>).qualifiedName }
+                        .let {
+                            if (it.isEmpty()) "" else it.joinToString(", ", prefix = ": ")
+                        }
+                it.println("interface ${modelName}${inheritClasses} {")
+                it.println(clazz.memberProperties.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
+                it.println()
+                it.println("}")
+
+
+                val converterName = "${modelName}Converter"
+                it.println()
+                it.println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
+                it.println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
+                it.println("    public ${modelName} FromCBORObject(CBORObject obj) {")
+                it.println("        switch(obj[\"class\"].AsString()) {")
+                map.forEach { subClass, serializer ->
+                    it.println("        case \"${serializer.descriptor.name}\":")
+                    it.println("            return ${subClass.qualifiedName}Converter.INSTANCE.FromCBORObject(obj[\"value\"]);")
+                }
+                it.println("        }")
+                it.println("        return null;")
+                it.println("    }")
+
+                it.println("    public CBORObject ToCBORObject(${modelName} model) {")
+                it.println("        switch(model) {")
+                map.forEach { subClass, serializer ->
+                    it.println("        case ${subClass.qualifiedName} v:")
+                    it.println("            return CBORObject.NewMap().Add(\"class\", \"${serializer.descriptor.name}\")")
+                    it.println("                .Add(\"value\", ${subClass.qualifiedName}Converter.INSTANCE.ToCBORObject(v));")
+                }
+                it.println("        }")
+                it.println("        return null;")
+                it.println("    }")
+                it.println("}")
+                it.println("}")
+            }
+        }
+    }
+
+
     @ExperimentalStdlibApi
     inline fun <reified T : Any> generate(serializer: KSerializer<T>) {
-        val clazz = T::class
-        serializer as GeneratedSerializer<*>
+        generate(T::class, serializer)
+    }
+
+    @ExperimentalStdlibApi
+    fun generate(clazz:KClass<*>, serializer:KSerializer<*>) {
+        serializer as GeneratedSerializer
 
         val inversePropertyName = clazz.memberProperties.filter {
             it.hasAnnotation<SerialName>()
         }.map { it.findAnnotation<SerialName>()!!.value to it.name }.toMap()
-
-        println(clazz.supertypes.map { it.classifier })
-        println(clazz.superclasses.map { it })
 
         val childSerializers = serializer.childSerializers()
         val properties = (0 until serializer.descriptor.elementsCount).map { index ->
@@ -56,9 +140,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         }
 
         val outFile = File(dstDir, clazz.qualifiedName!!.replace(".", File.separator) + ".cs")
-        println(outFile.parentFile.mkdirs())
-        println(outFile.absoluteFile)
-
+        outFile.parentFile.mkdirs()
 
         val modelName = clazz.simpleName
         outFile.printWriter(Charsets.UTF_8).use {
@@ -69,8 +151,11 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
                 using Piisu.CBOR;
             """.trimIndent())
             it.println("namespace models.simple {")
-
-            it.println("class ${modelName} {")
+            val inheritClasses = clazz.supertypes.filter { it.classifier != Any::class }.map { (it.classifier as KClass<*>).qualifiedName }
+                    .let {
+                        if (it.isEmpty()) "" else it.joinToString(", ", prefix = ": ")
+                    }
+            it.println("class ${modelName}${inheritClasses} {")
             it.println(properties.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
             it.println()
             it.println("    public override string ToString() {")

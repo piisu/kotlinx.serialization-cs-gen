@@ -69,7 +69,26 @@ namespace CborTest
             {
                 ItemInfoConverter.INSTANCE.ToCBORObject(itemInfo).WriteTo(stream);
             }
+
+
+            using (FileStream stream = new FileStream("C:\\Users\\Ryohei Katsume\\Projects\\kotlinx.serialization-cs-gen\\messages.cbor", FileMode.Open))
+            {
+                var m  = CBORObject.Read(stream);
+                Console.WriteLine(m.ToJSONString());
+            }
             
+            Messages messages = new Messages();
+            messages.messages = new List<IMessage>
+            {
+                new StringMessage {id = 0, message = "Hello"},
+                new IntMessage {id = 1, message = 123},
+                new StringMessage {id = 3, message = "日本語"}
+            };
+
+            using (FileStream stream = new FileStream("messages.cbor", FileMode.OpenOrCreate))
+            {
+                MessagesConverter.INSTANCE.ToCBORObject(messages).WriteTo(stream);
+            }
         }
     }
 }

@@ -1,8 +1,7 @@
 package models
 
 import kotlinx.serialization.cbor.Cbor
-import models.simple.ItemInfo
-import models.simple.User
+import models.simple.*
 import java.io.File
 
 fun main() {
@@ -14,8 +13,8 @@ fun main() {
         println(it)
     }
 
-
-    val itemInfo = Cbor().load(ItemInfo.serializer(), File("CborTest/item.cbor").readBytes())
-    println(itemInfo)
+    val cbor = Cbor(context = testModule)
+    val messages = cbor.load(Messages.serializer(), File("CborTest/messages.cbor").readBytes())
+    println(messages)
 
 }
