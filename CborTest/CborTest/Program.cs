@@ -57,6 +57,19 @@ namespace CborTest
             obj.WriteTo(s);
             Console.WriteLine(s.Length);
             s.Close();
+            
+            
+            
+            ItemInfo itemInfo = new ItemInfo();
+            itemInfo.id = 1;
+            itemInfo.name = "飴ちゃん";
+            itemInfo.created = DateTime.Now;
+
+            using (FileStream stream = new FileStream("item.cbor", FileMode.OpenOrCreate))
+            {
+                ItemInfoConverter.INSTANCE.ToCBORObject(itemInfo).WriteTo(stream);
+            }
+            
         }
     }
 }

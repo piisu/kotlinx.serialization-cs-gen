@@ -1,6 +1,7 @@
 package models
 
 import kotlinx.serialization.cbor.Cbor
+import models.simple.ItemInfo
 import models.simple.User
 import java.io.File
 
@@ -12,5 +13,9 @@ fun main() {
     user.likeUsers.forEach {
         println(it)
     }
+
+
+    val itemInfo = Cbor().load(ItemInfo.serializer(), File("CborTest/item.cbor").readBytes())
+    println(itemInfo)
 
 }

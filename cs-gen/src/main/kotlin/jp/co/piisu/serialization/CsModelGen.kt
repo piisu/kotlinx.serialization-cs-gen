@@ -4,6 +4,7 @@ import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.modules.EmptyModule
 import kotlinx.serialization.modules.SerialModule
+import serialization.jp.co.piisu.serialization.DateSerializer
 import java.io.File
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
@@ -54,37 +55,53 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
             }
         }
 
+        val outFile = File(dstDir, clazz.qualifiedName!!.replace(".", File.separator) + ".cs")
+        println(outFile.parentFile.mkdirs())
+        println(outFile.absoluteFile)
+
+
         val modelName = clazz.simpleName
-        println("class ${modelName} {")
-        println(properties.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
-        println()
-        println("    public override string ToString() {")
-        println("        return $\"" + properties.map { "${it.name}:{${it.name}}" }.joinToString() + "\";")
-        println("    }")
-        println("}")
+        outFile.printWriter(Charsets.UTF_8).use {
+            it.println("""
+                using System;
+                using System.Collections.Generic;
+                using PeterO.Cbor;
+                using Piisu.CBOR;
+            """.trimIndent())
+            it.println("namespace models.simple {")
+
+            it.println("class ${modelName} {")
+            it.println(properties.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
+            it.println()
+            it.println("    public override string ToString() {")
+            it.println("        return $\"" + properties.map { "${it.name}:{${it.name}}" }.joinToString() + "\";")
+            it.println("    }")
+            it.println("}")
 
 
-        val converterName = "${modelName}Converter"
-        println()
-        println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
-        println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
+            val converterName = "${modelName}Converter"
+            it.println()
+            it.println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
+            it.println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
 
-        println("    public ${modelName} FromCBORObject(CBORObject obj) {")
-        println("        ${modelName} model = new ${modelName}();")
-        println(properties.map { it.readOperation }
-                .joinToString("\n        ", prefix = "        "))
-        println("        return model;")
-        println("    }")
+            it.println("    public ${modelName} FromCBORObject(CBORObject obj) {")
+            it.println("        ${modelName} model = new ${modelName}();")
+            it.println(properties.map { it.readOperation }
+                    .joinToString("\n        ", prefix = "        "))
+            it.println("        return model;")
+            it.println("    }")
 
-        println("    public CBORObject ToCBORObject(${modelName} model) {")
-        println("        CBORObject obj = CBORObject.NewMap();")
+            it.println("    public CBORObject ToCBORObject(${modelName} model) {")
+            it.println("        CBORObject obj = CBORObject.NewMap();")
 
-        println(properties.map { it.writeOperation }
-                .joinToString("\n        ", prefix = "        "))
-        println("        return obj;")
-        println("    }")
+            it.println(properties.map { it.writeOperation }
+                    .joinToString("\n        ", prefix = "        "))
+            it.println("        return obj;")
+            it.println("    }")
+            it.println("}")
+            it.println("}")
+        }
 
-        println("}")
     }
 
     val ListLikeSerializer<*, *, *>.elementSerializer
@@ -111,6 +128,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         this == DoubleSerializer -> TODO()
         this == FloatSerializer -> TODO()
         this == BooleanSerializer -> TODO()
+        this == DateSerializer -> "AsDateTime()"
         this is ReferenceArraySerializer<*, *> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
         this is ArrayListSerializer<*> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
         this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
@@ -136,6 +154,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         this == DoubleSerializer -> TODO()
         this == FloatSerializer -> TODO()
         this == BooleanSerializer -> TODO()
+        this == DateSerializer -> "model.${name}.ToLong()"
         this is ReferenceArraySerializer<*, *> -> "model.${name}.ToCBORArray(${elementSerializer.csType}Converter.INSTANCE)"
         this is ArrayListSerializer<*> -> "model.${name}.ToCBORArray(${elementSerializer.csType}Converter.INSTANCE)"
         this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
@@ -163,6 +182,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
             this == DoubleSerializer -> "double"
             this == FloatSerializer -> "float"
             this == BooleanSerializer -> "bool"
+            this == DateSerializer -> "DateTime"
             this is ReferenceArraySerializer<*, *> -> "List<${elementSerializer.csType}>"
             this is ArrayListSerializer<*> -> "List<${elementSerializer.csType}>"
             this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
