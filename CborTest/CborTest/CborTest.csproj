@@ -9,4 +9,8 @@
       <PackageReference Include="PeterO.Cbor" Version="4.1.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="generated\models\simple" />
+    </ItemGroup>
+
 </Project>

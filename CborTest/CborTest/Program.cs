@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.VisualBasic.CompilerServices;
 using models.simple;
 using PeterO.Cbor;
+using Piisu.CBOR;
 
 namespace CborTest
 {
@@ -15,80 +16,22 @@ namespace CborTest
     {
         static void Main(string[] args)
         {
-            User taro = new User();
-            taro.id = 1;
-            taro.name = "太郎";
-
-            User jiro = new User();
-            jiro.id = 2;
-            jiro.name = "次郎";
-
-            taro.likeUsers = new List<User>();
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-            taro.likeUsers.Add(jiro);
-
-            Console.WriteLine(taro);
-
-            CBORObject obj = UserConverter.INSTANCE.ToCBORObject(taro);
-            Console.WriteLine(obj.ToJSONString().Length);
-
-            string fileName = "test.cbor";
-
-            FileStream s = new FileStream(fileName, FileMode.OpenOrCreate);
-            obj.WriteTo(s);
-            Console.WriteLine(s.Length);
-            s.Close();
-            
-            
-            
-            ItemInfo itemInfo = new ItemInfo();
-            itemInfo.id = 1;
-            itemInfo.name = "飴ちゃん";
-            itemInfo.created = DateTime.Now;
-
-            using (FileStream stream = new FileStream("item.cbor", FileMode.OpenOrCreate))
+            var itemInfo = new ItemInfoBath
             {
-                ItemInfoConverter.INSTANCE.ToCBORObject(itemInfo).WriteTo(stream);
-            }
-
-
-            using (FileStream stream = new FileStream("C:\\Users\\Ryohei Katsume\\Projects\\kotlinx.serialization-cs-gen\\messages.cbor", FileMode.Open))
-            {
-                var m  = CBORObject.Read(stream);
-                Console.WriteLine(m.ToJSONString());
-            }
-            
-            Messages messages = new Messages();
-            messages.messages = new List<IMessage>
-            {
-                new StringMessage {id = 0, message = "Hello"},
-                new IntMessage {id = 1, message = 123},
-                new StringMessage {id = 3, message = "日本語"}
+                id = 123, name = "お風呂", saleDuration = new Duration
+                {
+                    start = new DateTime(2000, 1, 1),
+                    end = new DateTime(2030, 1, 1)
+                },
+                value = 123
             };
 
-            using (FileStream stream = new FileStream("messages.cbor", FileMode.OpenOrCreate))
+
+            using (var s = new FileStream("../../../../itemInfo.cbor", FileMode.OpenOrCreate))
             {
-                MessagesConverter.INSTANCE.ToCBORObject(messages).WriteTo(stream);
+                ItemInfoBathConverter.INSTANCE.ToCBORObject(itemInfo).WriteTo(s);
             }
+            
         }
     }
 }

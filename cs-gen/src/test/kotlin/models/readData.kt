@@ -5,16 +5,15 @@ import models.simple.*
 import java.io.File
 
 fun main() {
-    val user = Cbor().load(User.serializer(), File("CborTest/test.cbor").readBytes());
 
-    println(user.id)
-    println(user.name)
-    user.likeUsers.forEach {
-        println(it)
-    }
+    val cbor = Cbor(context = module)
+    var obj = cbor.load(ItemInfoBath.serializer(), File("CborTest/itemInfo.cbor").readBytes())
 
-    val cbor = Cbor(context = testModule)
-    val messages = cbor.load(Messages.serializer(), File("CborTest/messages.cbor").readBytes())
-    println(messages)
+
+    println(obj)
+    println(obj.id)
+    println(obj.name)
+    println(obj.saleDuration)
+    println(obj.value)
 
 }

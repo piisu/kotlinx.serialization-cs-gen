@@ -15,6 +15,8 @@ import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.superclasses
 
+
+@ExperimentalStdlibApi
 @InternalSerializationApi
 class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = File(".")) {
 
@@ -25,37 +27,29 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         val csField: String
             get() = "public ${serializer.csType} ${name} {set; get;} "
 
-        val writeOperation:String
+        val writeOperation: String
             get() = "${serializer.genWriteOperation(name, serialName)}"
 
-        val readOperation:String
-            get() ="${serializer.genReadOperation(name, serialName)}"
+        val readOperation: String
+            get() = "${serializer.genReadOperation(name, serialName)}"
 
     }
 
-    val KType.csType:String
-        get() = when(classifier) {
-            Int::class-> "int"
-            Date::class -> "DateTime"
-            else -> "Unknown: " + this
-        }
 
 
-    internal val kotlin.reflect.KProperty<*>.csField:String
-        get()= "${returnType.csType} ${name} {get; set;}"
+    internal val kotlin.reflect.KProperty<*>.csField: String
+        get() = "${returnType.csType} ${name} {get; set;}"
 
 
-
-    @ExperimentalStdlibApi
     fun generatePolymorphic() {
-        val polyMap = context.javaClass.declaredFields.find { it.name=="polyMap" }!!.let {
+        val polyMap = context.javaClass.declaredFields.find { it.name == "polyMap" }!!.let {
             it.isAccessible = true
             it.get(context)
         } as Map<KClass<*>, Map<KClass<*>, KSerializer<*>>>
 
         polyMap.forEach { clazz, map ->
 
-            map.forEach { clazz, s->
+            map.forEach { clazz, s ->
                 this.generate(clazz, s)
             }
 
@@ -118,7 +112,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
     }
 
     @ExperimentalStdlibApi
-    fun generate(clazz:KClass<*>, serializer:KSerializer<*>) {
+    fun generate(clazz: KClass<*>, serializer: KSerializer<*>) {
         serializer as GeneratedSerializer
 
         val inversePropertyName = clazz.memberProperties.filter {
@@ -193,55 +187,83 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
             it.get(this) as KSerializer<*>
         }
 
+
+    @ExperimentalStdlibApi
+    val KType.csType: String
+        get() = when (classifier) {
+            Array<Int>::class -> "int[]"
+            Array<Byte>::class -> "byte[]"
+            Array<Char>::class -> "char[]"
+            Array<Short>::class -> "short[]"
+            Array<Long>::class -> "long[]"
+            Array<Double>::class -> "double[]"
+            Array<Float>::class -> "float[]"
+            Array<Boolean>::class -> "bool[]"
+            String::class -> "string"
+            Int::class -> "int"
+            Byte::class -> "byte"
+            Char::class -> "char"
+            Short::class -> "short"
+            Long::class -> "long"
+            Double::class -> "double"
+            Float::class -> "float"
+            Boolean::class -> "bool"
+            Date::class -> "DateTime"
+            else -> if ((classifier is KClass<*>) && (classifier as KClass<*>).hasAnnotation<Serializable>()) {
+                this.toString()
+            } else "UnknowType:" + this.toString()
+        }
+
+
     fun KSerializer<*>.genReadOperation(name: String, serialName: String): String = "${name} = obj[\"${serialName}\"]." + when {
-        this == IntArraySerializer -> TODO()
-        this == ByteArraySerializer -> TODO()
-        this == CharArraySerializer -> TODO()
-        this == ShortArraySerializer -> TODO()
-        this == LongArraySerializer -> TODO()
-        this == DoubleArraySerializer -> TODO()
-        this == FloatArraySerializer -> TODO()
-        this == BooleanArraySerializer -> TODO()
+        this == IntArraySerializer -> "ToArray<int>()"
+        this == ByteArraySerializer -> "ToArray<byte>()"
+        this == CharArraySerializer -> "ToArray<char>()"
+        this == ShortArraySerializer -> "ToArray<shot>()"
+        this == LongArraySerializer -> "ToArray<long>()"
+        this == DoubleArraySerializer -> "ToArray<double>()"
+        this == FloatArraySerializer -> "ToArray<float>()"
+        this == BooleanArraySerializer -> "ToArray<bool>"
         this == StringSerializer -> "AsString()"
-        this == IntSerializer -> "AsInt32()"
-        this == ByteSerializer -> TODO()
-        this == CharSerializer -> TODO()
-        this == ShortSerializer -> TODO()
-        this == LongSerializer -> TODO()
-        this == DoubleSerializer -> TODO()
-        this == FloatSerializer -> TODO()
-        this == BooleanSerializer -> TODO()
+        this == IntSerializer -> "ToObject<int>()"
+        this == ByteSerializer -> "ToObject<byte>()"
+        this == CharSerializer -> "ToObject<char>()"
+        this == ShortSerializer -> "ToObject<short>()"
+        this == LongSerializer -> "ToObject<long>()"
+        this == DoubleSerializer -> "ToObject<double>()"
+        this == FloatSerializer -> "ToObject<float>()"
+        this == BooleanSerializer -> "ToObject<bool>()"
         this == DateSerializer -> "AsDateTime()"
         this is ReferenceArraySerializer<*, *> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
         this is ArrayListSerializer<*> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
-        this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
-        this is GeneratedSerializer<*> -> descriptor.name
+        this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!.let{"ToObject<${it}>(${it}Converter.INSTANCE)"}
+        this is GeneratedSerializer<*> -> "ToObject<${descriptor.name}>(${descriptor.name}Converter.INSTANCE)"
         else -> "UnknowType:" + this.toString()
     } + ""
 
     fun KSerializer<*>.genWriteOperation(name: String, serialName: String): String = "obj.Add(\"${serialName}\", " + when {
-        this == IntArraySerializer -> TODO()
-        this == ByteArraySerializer -> TODO()
-        this == CharArraySerializer -> TODO()
-        this == ShortArraySerializer -> TODO()
-        this == LongArraySerializer -> TODO()
-        this == DoubleArraySerializer -> TODO()
-        this == FloatArraySerializer -> TODO()
-        this == BooleanArraySerializer -> TODO()
-        this == StringSerializer -> "model.${name}"
-        this == IntSerializer -> "model.${name}"
-        this == ByteSerializer -> TODO()
-        this == CharSerializer -> TODO()
-        this == ShortSerializer -> TODO()
-        this == LongSerializer -> TODO()
-        this == DoubleSerializer -> TODO()
-        this == FloatSerializer -> TODO()
-        this == BooleanSerializer -> TODO()
+        this == IntArraySerializer
+                || this == ByteArraySerializer
+                || this == CharArraySerializer
+                || this == ShortArraySerializer
+                || this == LongArraySerializer
+                || this == DoubleArraySerializer
+                || this == FloatArraySerializer
+                || this == BooleanArraySerializer
+                || this == StringSerializer
+                || this == IntSerializer
+                || this == ByteSerializer
+                || this == CharSerializer
+                || this == ShortSerializer
+                || this == LongSerializer
+                || this == DoubleSerializer
+                || this == FloatSerializer
+                || this == BooleanSerializer -> "model.$name"
         this == DateSerializer -> "model.${name}.ToLong()"
         this is ReferenceArraySerializer<*, *> -> "model.${name}.ToCBORArray(${elementSerializer.csType}Converter.INSTANCE)"
         this is ArrayListSerializer<*> -> "model.${name}.ToCBORArray(${elementSerializer.csType}Converter.INSTANCE)"
-        this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!
-        this is GeneratedSerializer<*> -> descriptor.name
+        this is PolymorphicSerializer<*> -> "${baseClass.qualifiedName!!}Converter.INSTANCE.ToCBORObject(model.${name})"
+        this is GeneratedSerializer<*> -> "${descriptor.name}Converter.INSTANCE.ToCBORObject(model.${name})"
         else -> "UnknowType:" + this.toString()
     } + ");"
 
