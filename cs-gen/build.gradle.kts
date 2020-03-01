@@ -25,7 +25,10 @@ tasks {
     }
 
     create("generate", JavaExec::class) {
-        classpath = sourceSets["main"].runtimeClasspath
-        main = "hoge.HelloKt"
+        dependsOn("build")
+        classpath = sourceSets["test"].runtimeClasspath
+        main = "models.simple.SimpleModelKt"
     }
 }
+
+

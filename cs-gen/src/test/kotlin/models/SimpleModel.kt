@@ -16,6 +16,7 @@ interface ItemInfo {
     var id:Int
     var name:String
     var saleDuration:Duration
+    var created:Date
 }
 
 @Serializable
@@ -23,6 +24,7 @@ open class ItemInfoBase: ItemInfo {
     override var id: Int = 0;
     override var name: String = ""
     override var saleDuration:Duration = Duration(Date(0), Date(Long.MAX_VALUE))
+    override var created: Date = Date(0)
 }
 
 @Serializable
@@ -33,6 +35,7 @@ class ItemInfoFood:ItemInfoBase() {
 @Serializable
 class ItemInfoBath:ItemInfoBase() {
     var value:Int = 0
+    var interval:Int = 0
 }
 
 interface ItemInfoEquipment:ItemInfo {
@@ -47,8 +50,14 @@ val module = SerializersModule {
         ItemInfoFood::class with ItemInfoFood.serializer()
         ItemInfoBath::class with ItemInfoBath.serializer()
     }
-
 }
+
+@Serializable
+data class FullModel(
+        val intArray:IntArray,
+        val byteArray:ByteArray
+)
+
 
 @ExperimentalStdlibApi
 @InternalSerializationApi
@@ -58,5 +67,7 @@ fun main() {
     modelGen.generate(ItemInfoBase.serializer())
     modelGen.generate(Duration.serializer())
     modelGen.generatePolymorphic()
+
+    modelGen.generate(FullModel.serializer())
 }
 
