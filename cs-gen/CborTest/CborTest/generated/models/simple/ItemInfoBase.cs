@@ -7,9 +7,10 @@ class ItemInfoBase: models.simple.ItemInfo {
     public int id {set; get;} 
     public string name {set; get;} 
     public models.simple.Duration saleDuration {set; get;} 
+    public DateTime created {set; get;} 
 
     public override string ToString() {
-        return $"id:{id}, name:{name}, saleDuration:{saleDuration}";
+        return $"id:{id}, name:{name}, saleDuration:{saleDuration}, created:{created}";
     }
 }
 
@@ -18,13 +19,15 @@ class ItemInfoBaseConverter: ICBORToFromConverter<ItemInfoBase> {
     public ItemInfoBase FromCBORObject(CBORObject obj) => new ItemInfoBase {
         id = obj["id"].ToObject<int>(),
         name = obj["name"].AsString(),
-        saleDuration = obj["saleDuration"].ToObject<models.simple.Duration>(models.simple.DurationConverter.INSTANCE)
+        saleDuration = obj["saleDuration"].ToObject<models.simple.Duration>(models.simple.DurationConverter.INSTANCE),
+        created = obj["created"].AsDateTime()
     };
     public CBORObject ToCBORObject(ItemInfoBase model) {
         CBORObject obj = CBORObject.NewMap();
         obj.Add("id", model.id);
         obj.Add("name", model.name);
         obj.Add("saleDuration", models.simple.DurationConverter.INSTANCE.ToCBORObject(model.saleDuration));
+        obj.Add("created", model.created.ToLong());
         return obj;
     }
 }

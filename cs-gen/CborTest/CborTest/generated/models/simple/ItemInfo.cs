@@ -4,6 +4,7 @@ using PeterO.Cbor;
 using Piisu.CBOR;
 namespace models.simple {
 interface ItemInfo {
+    DateTime created {get; set;}
     int id {get; set;}
     string name {get; set;}
     models.simple.Duration saleDuration {get; set;}

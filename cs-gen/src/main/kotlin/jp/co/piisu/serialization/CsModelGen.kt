@@ -8,7 +8,6 @@ import serialization.jp.co.piisu.serialization.DateSerializer
 import java.io.File
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
@@ -36,7 +35,6 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
     }
 
 
-
     internal val kotlin.reflect.KProperty<*>.csField: String
         get() = "${returnType.csType} ${name} {get; set;}"
 
@@ -57,6 +55,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
             outFile.parentFile.mkdirs()
             outFile.printWriter(Charsets.UTF_8).use {
                 val modelName = clazz.simpleName
+                val alreadyDeclaredProperties = clazz.superclasses.flatMap { it.memberProperties.map { it.name } }
 
                 it.println("""
                 using System;
@@ -70,7 +69,9 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
                             if (it.isEmpty()) "" else it.joinToString(", ", prefix = ": ")
                         }
                 it.println("interface ${modelName}${inheritClasses} {")
-                it.println(clazz.memberProperties.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
+                it.println(clazz.memberProperties
+                        .filter { !alreadyDeclaredProperties.contains(it.name) }
+                        .map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
                 it.println()
                 it.println("}")
 
@@ -115,6 +116,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
     fun generate(clazz: KClass<*>, serializer: KSerializer<*>) {
         serializer as GeneratedSerializer
 
+        //SerialNameから実際のプロパティ名を逆引きする
         val inversePropertyName = clazz.memberProperties.filter {
             it.hasAnnotation<SerialName>()
         }.map { it.findAnnotation<SerialName>()!!.value to it.name }.toMap()
@@ -135,6 +137,10 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
 
         val outFile = File(dstDir, clazz.qualifiedName!!.replace(".", File.separator) + ".cs")
         outFile.parentFile.mkdirs()
+        //親クラスに実装済みのプロパティ一覧
+        val alreadyDeclaredProperties = clazz.superclasses
+                    .filter { !it.isAbstract }
+                    .flatMap { it.memberProperties.map { it.name } }
 
         val modelName = clazz.simpleName
         outFile.printWriter(Charsets.UTF_8).use {
@@ -150,7 +156,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
                         if (it.isEmpty()) "" else it.joinToString(", ", prefix = ": ")
                     }
             it.println("class ${modelName}${inheritClasses} {")
-            it.println(properties.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
+            it.println(properties.filter { !alreadyDeclaredProperties.contains(it.name) }.map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
             it.println()
             it.println("    public override string ToString() {")
             it.println("        return $\"" + properties.map { "${it.name}:{${it.name}}" }.joinToString() + "\";")

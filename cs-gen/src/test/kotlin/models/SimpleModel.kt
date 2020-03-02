@@ -42,13 +42,20 @@ interface ItemInfoEquipment:ItemInfo {
     var layer:Int;
 }
 
-interface ItemInfoWall:ItemInfoEquipment {}
+
+@Serializable
+class ItemInfoWall:ItemInfoBase(), ItemInfoEquipment {
+    override var layer: Int = 0
+}
 
 
 val module = SerializersModule {
     polymorphic(ItemInfo::class) {
         ItemInfoFood::class with ItemInfoFood.serializer()
         ItemInfoBath::class with ItemInfoBath.serializer()
+    }
+    polymorphic (ItemInfoEquipment::class){
+        ItemInfoWall::class with ItemInfoWall.serializer()
     }
 }
 

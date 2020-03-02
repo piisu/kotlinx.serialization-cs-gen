@@ -3,33 +3,30 @@ using System.Collections.Generic;
 using PeterO.Cbor;
 using Piisu.CBOR;
 namespace models.simple {
-class ItemInfoBath: models.simple.ItemInfoBase {
-    public int value {set; get;} 
-    public int interval {set; get;} 
+class ItemInfoWall: models.simple.ItemInfoBase, models.simple.ItemInfoEquipment {
+    public int layer {set; get;} 
 
     public override string ToString() {
-        return $"id:{id}, name:{name}, saleDuration:{saleDuration}, created:{created}, value:{value}, interval:{interval}";
+        return $"id:{id}, name:{name}, saleDuration:{saleDuration}, created:{created}, layer:{layer}";
     }
 }
 
-class ItemInfoBathConverter: ICBORToFromConverter<ItemInfoBath> {
-    public static readonly ItemInfoBathConverter INSTANCE = new ItemInfoBathConverter();
-    public ItemInfoBath FromCBORObject(CBORObject obj) => new ItemInfoBath {
+class ItemInfoWallConverter: ICBORToFromConverter<ItemInfoWall> {
+    public static readonly ItemInfoWallConverter INSTANCE = new ItemInfoWallConverter();
+    public ItemInfoWall FromCBORObject(CBORObject obj) => new ItemInfoWall {
         id = obj["id"].ToObject<int>(),
         name = obj["name"].AsString(),
         saleDuration = obj["saleDuration"].ToObject<models.simple.Duration>(models.simple.DurationConverter.INSTANCE),
         created = obj["created"].AsDateTime(),
-        value = obj["value"].ToObject<int>(),
-        interval = obj["interval"].ToObject<int>()
+        layer = obj["layer"].ToObject<int>()
     };
-    public CBORObject ToCBORObject(ItemInfoBath model) {
+    public CBORObject ToCBORObject(ItemInfoWall model) {
         CBORObject obj = CBORObject.NewMap();
         obj.Add("id", model.id);
         obj.Add("name", model.name);
         obj.Add("saleDuration", models.simple.DurationConverter.INSTANCE.ToCBORObject(model.saleDuration));
         obj.Add("created", model.created.ToLong());
-        obj.Add("value", model.value);
-        obj.Add("interval", model.interval);
+        obj.Add("layer", model.layer);
         return obj;
     }
 }
