@@ -1,0 +1,159 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "PeterO.Cbor/4.1.0": {
+        "type": "package",
+        "dependencies": {
+          "PeterO.Numbers": "1.5.1",
+          "PeterO.URIUtility": "1.0.0"
+        },
+        "compile": {
+          "lib/netstandard1.0/CBOR.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/CBOR.dll": {}
+        }
+      },
+      "PeterO.Numbers/1.5.1": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.0/Numbers.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/Numbers.dll": {}
+        }
+      },
+      "PeterO.URIUtility/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.0/URIUtility.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/URIUtility.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "PeterO.Cbor/4.1.0": {
+      "sha512": "nzR5m3G2i6lFZkM8/qFdToONnBydStRg9+6KYyLtMVV2inrsG15/G2CjPitZoNCvtE7f2a6JMw12dK9Bd2yEog==",
+      "type": "package",
+      "path": "petero.cbor/4.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net20/CBOR.dll",
+        "lib/net20/CBOR.xml",
+        "lib/net40/CBOR.dll",
+        "lib/net40/CBOR.xml",
+        "lib/netstandard1.0/CBOR.dll",
+        "lib/netstandard1.0/CBOR.xml",
+        "petero.cbor.4.1.0.nupkg.sha512",
+        "petero.cbor.nuspec"
+      ]
+    },
+    "PeterO.Numbers/1.5.1": {
+      "sha512": "1uujmRfeewr12lhtL3xSODj35urCKNbu7IUaXS1+SQ7B+ud/WC6YykRxAhClpyccJ+FK7KCgBIfw9vn7h0tB0g==",
+      "type": "package",
+      "path": "petero.numbers/1.5.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net20/Numbers.dll",
+        "lib/net20/Numbers.xml",
+        "lib/net40/Numbers.dll",
+        "lib/net40/Numbers.xml",
+        "lib/netstandard1.0/Numbers.dll",
+        "lib/netstandard1.0/Numbers.xml",
+        "petero.numbers.1.5.1.nupkg.sha512",
+        "petero.numbers.nuspec"
+      ]
+    },
+    "PeterO.URIUtility/1.0.0": {
+      "sha512": "fpRTBsYACMp7NvTECauYRomubWTC3vUNw4hMXdIedP8ctBGK6tea9HOJwE+qVzis6MZYkL3LIs8qeY3rc6Jdlw==",
+      "type": "package",
+      "path": "petero.uriutility/1.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net20/URIUtility.dll",
+        "lib/net20/URIUtility.xml",
+        "lib/net40/URIUtility.dll",
+        "lib/net40/URIUtility.xml",
+        "lib/netstandard1.0/URIUtility.dll",
+        "lib/netstandard1.0/URIUtility.xml",
+        "petero.uriutility.1.0.0.nupkg.sha512",
+        "petero.uriutility.nuspec"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETCoreApp,Version=v3.1": [
+      "PeterO.Cbor >= 4.1.0"
+    ]
+  },
+  "packageFolders": {
+    "/Users/ryohei/.nuget/packages/": {},
+    "/usr/local/share/dotnet/sdk/NuGetFallbackFolder": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "/Users/ryohei/Projects/kotlinx.serialization-cs-gen/cs-gen/CborTest/CborTest/CborTest.csproj",
+      "projectName": "CborTest",
+      "projectPath": "/Users/ryohei/Projects/kotlinx.serialization-cs-gen/cs-gen/CborTest/CborTest/CborTest.csproj",
+      "packagesPath": "/Users/ryohei/.nuget/packages/",
+      "outputPath": "/Users/ryohei/Projects/kotlinx.serialization-cs-gen/cs-gen/CborTest/CborTest/obj/",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
+      ],
+      "configFilePaths": [
+        "/Users/ryohei/.nuget/NuGet/NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "netcoreapp3.1"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "netcoreapp3.1": {
+        "dependencies": {
+          "PeterO.Cbor": {
+            "target": "Package",
+            "version": "[4.1.0, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/3.1.101/RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

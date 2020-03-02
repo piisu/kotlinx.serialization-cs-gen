@@ -29,6 +29,16 @@ tasks {
         classpath = sourceSets["test"].runtimeClasspath
         main = "models.simple.SimpleModelKt"
     }
+
+    create("buildDotNet", Exec::class) {
+        group = "dotNet"
+        workingDir = File(projectDir, "CborTest")
+        commandLine = listOf("dotnet", "build", "CborTest.sln")
+    }
+    create("runDotNet", Exec::class) {
+        group = "dotNet"
+        workingDir = File(projectDir, "CborTest")
+        commandLine = listOf("dotnet", "run", "--project","CborTest/CborTest.csproj")
+    }
+
 }
-
-

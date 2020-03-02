@@ -1,0 +1,75 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.1",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "CborTest/1.0.0": {
+        "dependencies": {
+          "PeterO.Cbor": "4.1.0"
+        },
+        "runtime": {
+          "CborTest.dll": {}
+        }
+      },
+      "PeterO.Cbor/4.1.0": {
+        "dependencies": {
+          "PeterO.Numbers": "1.5.1",
+          "PeterO.URIUtility": "1.0.0"
+        },
+        "runtime": {
+          "lib/netstandard1.0/CBOR.dll": {
+            "assemblyVersion": "4.1.0.0",
+            "fileVersion": "4.1.0.0"
+          }
+        }
+      },
+      "PeterO.Numbers/1.5.1": {
+        "runtime": {
+          "lib/netstandard1.0/Numbers.dll": {
+            "assemblyVersion": "1.5.1.0",
+            "fileVersion": "1.5.1.0"
+          }
+        }
+      },
+      "PeterO.URIUtility/1.0.0": {
+        "runtime": {
+          "lib/netstandard1.0/URIUtility.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CborTest/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "PeterO.Cbor/4.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-nzR5m3G2i6lFZkM8/qFdToONnBydStRg9+6KYyLtMVV2inrsG15/G2CjPitZoNCvtE7f2a6JMw12dK9Bd2yEog==",
+      "path": "petero.cbor/4.1.0",
+      "hashPath": "petero.cbor.4.1.0.nupkg.sha512"
+    },
+    "PeterO.Numbers/1.5.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-1uujmRfeewr12lhtL3xSODj35urCKNbu7IUaXS1+SQ7B+ud/WC6YykRxAhClpyccJ+FK7KCgBIfw9vn7h0tB0g==",
+      "path": "petero.numbers/1.5.1",
+      "hashPath": "petero.numbers.1.5.1.nupkg.sha512"
+    },
+    "PeterO.URIUtility/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fpRTBsYACMp7NvTECauYRomubWTC3vUNw4hMXdIedP8ctBGK6tea9HOJwE+qVzis6MZYkL3LIs8qeY3rc6Jdlw==",
+      "path": "petero.uriutility/1.0.0",
+      "hashPath": "petero.uriutility.1.0.0.nupkg.sha512"
+    }
+  }
+}

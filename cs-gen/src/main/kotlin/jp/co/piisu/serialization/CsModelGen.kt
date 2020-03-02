@@ -49,8 +49,8 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
 
         polyMap.forEach { clazz, map ->
 
-            map.forEach { clazz, s ->
-                this.generate(clazz, s)
+            map.forEach { subClass, s ->
+                this.generate(subClass, s)
             }
 
             val outFile = File(dstDir, clazz.qualifiedName!!.replace(".", File.separator) + ".cs")

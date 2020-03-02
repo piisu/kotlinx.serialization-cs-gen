@@ -27,7 +27,7 @@ namespace CborTest
             };
 
 
-            using (var s = new FileStream("../../../../itemInfo.cbor", FileMode.OpenOrCreate))
+            using (var s = new FileStream("itemInfo.cbor", FileMode.OpenOrCreate))
             {
                 ItemInfoBathConverter.INSTANCE.ToCBORObject(itemInfo).WriteTo(s);
             }
