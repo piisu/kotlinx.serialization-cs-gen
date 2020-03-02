@@ -39,70 +39,79 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         get() = "${returnType.csType} ${name} {get; set;}"
 
 
-    fun generatePolymorphic() {
+
+    fun generatePolymorphic(clazz: KClass<*>, defaultImpl: KClass<*>? = null) {
+
+
         val polyMap = context.javaClass.declaredFields.find { it.name == "polyMap" }!!.let {
             it.isAccessible = true
             it.get(context)
         } as Map<KClass<*>, Map<KClass<*>, KSerializer<*>>>
 
-        polyMap.forEach { clazz, map ->
+        val serializerMap = polyMap[clazz]
 
-            map.forEach { subClass, s ->
-                this.generate(subClass, s)
-            }
+        //generate interfaces
+        serializerMap!!.forEach { subClass, s ->
+            this.generate(subClass, s)
+        }
 
-            val outFile = File(dstDir, clazz.qualifiedName!!.replace(".", File.separator) + ".cs")
-            outFile.parentFile.mkdirs()
-            outFile.printWriter(Charsets.UTF_8).use {
-                val modelName = clazz.simpleName
-                val alreadyDeclaredProperties = clazz.superclasses.flatMap { it.memberProperties.map { it.name } }
+        val outFile = File(dstDir, clazz.qualifiedName!!.replace(".", File.separator) + ".cs")
+        outFile.parentFile.mkdirs()
+        outFile.printWriter(Charsets.UTF_8).use {
+            val modelName = clazz.simpleName
+            val alreadyDeclaredProperties = clazz.superclasses.flatMap { it.memberProperties.map { it.name } }
 
-                it.println("""
-                using System;
-                using System.Collections.Generic;
-                using PeterO.Cbor;
-                using Piisu.CBOR;
-            """.trimIndent())
-                it.println("namespace models.simple {")
-                val inheritClasses = clazz.supertypes.filter { it.classifier != Any::class }.map { (it.classifier as KClass<*>).qualifiedName }
-                        .let {
-                            if (it.isEmpty()) "" else it.joinToString(", ", prefix = ": ")
-                        }
-                it.println("interface ${modelName}${inheritClasses} {")
-                it.println(clazz.memberProperties
-                        .filter { !alreadyDeclaredProperties.contains(it.name) }
-                        .map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
-                it.println()
-                it.println("}")
+            it.println("""
+                    using System;
+                    using System.Collections.Generic;
+                    using PeterO.Cbor;
+                    using Piisu.CBOR;
+                """.trimIndent())
+            it.println("namespace models.simple {")
+            val inheritClasses = clazz.supertypes.filter { it.classifier != Any::class }.map { (it.classifier as KClass<*>).qualifiedName }
+                    .let {
+                        if (it.isEmpty()) "" else it.joinToString(", ", prefix = ": ")
+                    }
+            it.println("interface ${modelName}${inheritClasses} {")
+            it.println(clazz.memberProperties
+                    .filter { !alreadyDeclaredProperties.contains(it.name) }
+                    .map { "${it.csField}" }.joinToString("\n    ", prefix = "    "))
+            it.println()
+            it.println("}")
 
 
-                val converterName = "${modelName}Converter"
-                it.println()
-                it.println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
-                it.println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
-                it.println("    public ${modelName} FromCBORObject(CBORObject obj) {")
-                it.println("        switch(obj[\"class\"].AsString()) {")
-                map.forEach { subClass, serializer ->
+            val converterName = "${modelName}Converter"
+            it.println()
+            it.println("class ${converterName}: ICBORToFromConverter<${modelName}> {")
+            it.println("    public static readonly ${converterName} INSTANCE = new ${converterName}();")
+            it.println("    public ${modelName} FromCBORObject(CBORObject obj) {")
+            it.println("        switch(obj[\"class\"].AsString()) {")
+            serializerMap.forEach { subClass, serializer ->
+                if (defaultImpl == subClass) {
+                    it.println("        default:")
+                } else {
                     it.println("        case \"${serializer.descriptor.name}\":")
-                    it.println("            return ${subClass.qualifiedName}Converter.INSTANCE.FromCBORObject(obj[\"value\"]);")
                 }
-                it.println("        }")
-                it.println("        return null;")
-                it.println("    }")
-
-                it.println("    public CBORObject ToCBORObject(${modelName} model) {")
-                it.println("        switch(model) {")
-                map.forEach { subClass, serializer ->
-                    it.println("        case ${subClass.qualifiedName} v:")
-                    it.println("            return CBORObject.NewMap().Add(\"class\", \"${serializer.descriptor.name}\")")
-                    it.println("                .Add(\"value\", ${subClass.qualifiedName}Converter.INSTANCE.ToCBORObject(v));")
-                }
-                it.println("        }")
-                it.println("        return null;")
-                it.println("    }")
-                it.println("}")
-                it.println("}")
+                it.println("            return ${subClass.qualifiedName}Converter.INSTANCE.FromCBORObject(obj[\"value\"]);")
             }
+
+
+            it.println("        }")
+            it.println("        return null;")
+            it.println("    }")
+
+            it.println("    public CBORObject ToCBORObject(${modelName} model) {")
+            it.println("        switch(model) {")
+            serializerMap.forEach { subClass, serializer ->
+                it.println("        case ${subClass.qualifiedName} v:")
+                it.println("            return CBORObject.NewMap().Add(\"class\", \"${serializer.descriptor.name}\")")
+                it.println("                .Add(\"value\", ${subClass.qualifiedName}Converter.INSTANCE.ToCBORObject(v));")
+            }
+            it.println("        }")
+            it.println("        return null;")
+            it.println("    }")
+            it.println("}")
+            it.println("}")
         }
     }
 
@@ -139,8 +148,8 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         outFile.parentFile.mkdirs()
         //親クラスに実装済みのプロパティ一覧
         val alreadyDeclaredProperties = clazz.superclasses
-                    .filter { !it.isAbstract }
-                    .flatMap { it.memberProperties.map { it.name } }
+                .filter { !it.isAbstract }
+                .flatMap { it.memberProperties.map { it.name } }
 
         val modelName = clazz.simpleName
         outFile.printWriter(Charsets.UTF_8).use {
@@ -242,7 +251,7 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
         this == DateSerializer -> "AsDateTime()"
         this is ReferenceArraySerializer<*, *> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
         this is ArrayListSerializer<*> -> "ToList(${elementSerializer.csType}Converter.INSTANCE)"
-        this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!.let{"ToObject<${it}>(${it}Converter.INSTANCE)"}
+        this is PolymorphicSerializer<*> -> baseClass.qualifiedName!!.let { "ToObject<${it}>(${it}Converter.INSTANCE)" }
         this is GeneratedSerializer<*> -> "ToObject<${descriptor.name}>(${descriptor.name}Converter.INSTANCE)"
         else -> "UnknowType:" + this.toString()
     } + ""

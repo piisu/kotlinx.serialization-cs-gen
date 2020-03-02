@@ -19,6 +19,8 @@ class ItemInfoConverter: ICBORToFromConverter<ItemInfo> {
             return models.simple.ItemInfoBathConverter.INSTANCE.FromCBORObject(obj["value"]);
         case "models.simple.ItemInfoFood":
             return models.simple.ItemInfoFoodConverter.INSTANCE.FromCBORObject(obj["value"]);
+        default:
+            return models.simple.ItemInfoBaseConverter.INSTANCE.FromCBORObject(obj["value"]);
         }
         return null;
     }
@@ -30,6 +32,9 @@ class ItemInfoConverter: ICBORToFromConverter<ItemInfo> {
         case models.simple.ItemInfoFood v:
             return CBORObject.NewMap().Add("class", "models.simple.ItemInfoFood")
                 .Add("value", models.simple.ItemInfoFoodConverter.INSTANCE.ToCBORObject(v));
+        case models.simple.ItemInfoBase v:
+            return CBORObject.NewMap().Add("class", "models.simple.ItemInfoBase")
+                .Add("value", models.simple.ItemInfoBaseConverter.INSTANCE.ToCBORObject(v));
         }
         return null;
     }

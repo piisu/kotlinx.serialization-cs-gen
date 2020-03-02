@@ -25,6 +25,10 @@ open class ItemInfoBase: ItemInfo {
     override var name: String = ""
     override var saleDuration:Duration = Duration(Date(0), Date(Long.MAX_VALUE))
     override var created: Date = Date(0)
+
+    override fun toString(): String {
+        return "ItemInfoBase(id=$id, name='$name', saleDuration=$saleDuration, created=$created)"
+    }
 }
 
 @Serializable
@@ -51,6 +55,7 @@ class ItemInfoWall:ItemInfoBase(), ItemInfoEquipment {
 
 val module = SerializersModule {
     polymorphic(ItemInfo::class) {
+        ItemInfoBase::class with ItemInfoBase.serializer()
         ItemInfoFood::class with ItemInfoFood.serializer()
         ItemInfoBath::class with ItemInfoBath.serializer()
     }
@@ -66,6 +71,10 @@ data class FullModel(
 )
 
 
+@Serializable
+data class ItemInfoMaster(val items:List<ItemInfo>)
+
+
 @ExperimentalStdlibApi
 @InternalSerializationApi
 fun main() {
@@ -73,8 +82,12 @@ fun main() {
 
     modelGen.generate(ItemInfoBase.serializer())
     modelGen.generate(Duration.serializer())
-    modelGen.generatePolymorphic()
+
+    modelGen.generatePolymorphic(ItemInfo::class, ItemInfoBase::class)
+    modelGen.generatePolymorphic(ItemInfoEquipment::class)
 
     modelGen.generate(FullModel.serializer())
+
+    modelGen.generate(ItemInfoMaster.serializer())
 }
 

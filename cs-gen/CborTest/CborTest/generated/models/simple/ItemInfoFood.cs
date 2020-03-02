@@ -21,7 +21,8 @@ class ItemInfoFoodConverter: ICBORToFromConverter<ItemInfoFood> {
         value = obj["value"].ToObject<int>()
     };
     public CBORObject ToCBORObject(ItemInfoFood model) {
-        CBORObject obj = CBORObject.NewMap();
+        return CBORObject.NewMap()
+            .Add()
         obj.Add("id", model.id);
         obj.Add("name", model.name);
         obj.Add("saleDuration", models.simple.DurationConverter.INSTANCE.ToCBORObject(model.saleDuration));

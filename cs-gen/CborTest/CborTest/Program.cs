@@ -3,6 +3,7 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using Microsoft.VisualBasic.CompilerServices;
@@ -16,20 +17,51 @@ namespace CborTest
     {
         static void Main(string[] args)
         {
-            var itemInfo = new ItemInfoBath
+            var itemInfoMaster = new ItemInfoMaster
             {
-                id = 123, name = "お風呂", saleDuration = new Duration
+                items = new List<ItemInfo>
                 {
-                    start = new DateTime(2000, 1, 1),
-                    end = new DateTime(2030, 1, 1)
-                },
-                value = 123
+                    new ItemInfoBath
+                    {
+                        id = 123, name = "お風呂", saleDuration = new Duration
+                        {
+                            start = new DateTime(2000, 1, 1),
+                            end = new DateTime(2030, 1, 1)
+                        },
+                        value = 123, created = DateTime.Now
+                    },
+                    new ItemInfoFood
+                    {
+                        id = 234, name="カレーライス", saleDuration = new Duration
+                        {
+                            start = new DateTime(2000, 1, 1),
+                            end = new DateTime(2030, 1, 1)
+                        },
+                        value = 123, created = DateTime.Now
+                    }
+                }
             };
 
-
-            using (var s = new FileStream("itemInfo.cbor", FileMode.OpenOrCreate))
+            for (int i = 0; i < 10; i++)
             {
-                ItemInfoBathConverter.INSTANCE.ToCBORObject(itemInfo).WriteTo(s);
+                itemInfoMaster.items.AddRange(itemInfoMaster.items);
+            }
+            
+            
+            using (var s = new FileStream("itemMaster.json", FileMode.OpenOrCreate))
+            {
+                s.Write(ItemInfoMasterConverter.INSTANCE.ToCBORObject(itemInfoMaster).ToJSONBytes());
+            }
+            
+            using (var s = new FileStream("itemMaster.cbor", FileMode.OpenOrCreate))
+            {
+                using (var z = new ZipArchive(s, ZipArchiveMode.Create))
+                {
+                    z.CreateEntry("entry", CompressionLevel.Fastest).Open()
+                        .Write(ItemInfoMasterConverter.INSTANCE.ToCBORObject(itemInfoMaster).EncodeToBytes());
+                }
+
+                
             }
             
         }
