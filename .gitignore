@@ -2,5 +2,7 @@ build/
 .gradle
 .idea/
 
-CborTest/CborTest/bin/
-CborTest/CborTest/obj/
+cs-gen/CborTest/CborTest/bin
+cs-gen/CborTest/CborTest/obj
+
+out/
