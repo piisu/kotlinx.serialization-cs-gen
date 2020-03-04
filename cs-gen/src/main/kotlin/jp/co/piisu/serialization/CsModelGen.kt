@@ -94,8 +94,6 @@ class CsModelGen(val context: SerialModule = EmptyModule, var dstDir: File = Fil
                 }
                 it.println("            return ${subClass.qualifiedName}Converter.INSTANCE.FromCBORObject(obj[\"value\"]);")
             }
-
-
             it.println("        }")
             it.println("        return null;")
             it.println("    }")
